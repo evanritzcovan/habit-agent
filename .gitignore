@@ -48,3 +48,7 @@ yarn-error.*
 
 expo-env.d.ts
 # @end expo-cli
+
+# planning
+/planning
+render.png

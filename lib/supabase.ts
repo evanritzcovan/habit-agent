@@ -11,7 +11,7 @@ function requireUrl(): string {
   return value;
 }
 
-function requirePublishableKey(): string {
+function requireKey(): string {
   const value = process.env.EXPO_PUBLIC_SUPABASE_KEY;
   if (!value) {
     throw new Error(
@@ -22,8 +22,7 @@ function requirePublishableKey(): string {
 }
 
 const supabaseUrl = requireUrl();
-/** Publishable key (dashboard may label it “publishable”; older docs call it anon). Safe in the client; RLS enforces access. */
-const supabaseKey = requirePublishableKey();
+const supabaseKey = requireKey();
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
