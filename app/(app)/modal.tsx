@@ -34,7 +34,7 @@ export default function AboutModalScreen() {
           <Text style={styles.versionText}>{String(version)}</Text>
         </View>
         <Text style={styles.footnote} lightColor="#71717a" darkColor="#a1a1aa">
-          Use the Done button to return to the Today tab.
+          Use the back control in the header to return to the Today tab.
         </Text>
       </ScrollView>
     </View>

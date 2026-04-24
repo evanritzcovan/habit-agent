@@ -62,16 +62,29 @@ export function ThemePreferenceProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const setPreference = useCallback((v: ThemePreference) => {
-    setPreferenceState(v);
-    void AsyncStorage.setItem(STORAGE_KEY, v);
-  }, []);
-
   const resolvedColorScheme: "light" | "dark" = useMemo(() => {
     if (preference === "light") return "light";
     if (preference === "dark") return "dark";
     return systemScheme === "dark" ? "dark" : "light";
   }, [preference, systemScheme]);
+
+  /**
+   * Keep React Native’s appearance in sync with Profile → Appearance so `useColorScheme`
+   * and native status/navigation chrome (notably Android) follow the in-app mode instead of
+   * only the device default.
+   */
+  useEffect(() => {
+    if (preference === "system") {
+      Appearance.setColorScheme(null);
+    } else {
+      Appearance.setColorScheme(resolvedColorScheme);
+    }
+  }, [preference, resolvedColorScheme]);
+
+  const setPreference = useCallback((v: ThemePreference) => {
+    setPreferenceState(v);
+    void AsyncStorage.setItem(STORAGE_KEY, v);
+  }, []);
 
   const value = useMemo(
     () => ({ preference, setPreference, resolvedColorScheme }),

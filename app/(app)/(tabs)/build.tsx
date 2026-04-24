@@ -1,11 +1,6 @@
-import { TabEmptyState } from "@/components/shell/TabEmptyState";
+import { HabitListScreen } from "@/components/habits/HabitListScreen";
 
-/** Build habits list (Phase 5). Green shell. */
+/** Build habits list (Phase 5). */
 export default function BuildScreen() {
-  return (
-    <TabEmptyState title="Build" variant="build">
-      Start and track habits you want to grow. You will add habits here, see streaks, and open
-      each habit to view its AI plan.
-    </TabEmptyState>
-  );
+  return <HabitListScreen kind="build" />;
 }

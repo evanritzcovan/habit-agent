@@ -19,7 +19,13 @@ export default function AuthGroupLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: true }}>
+    <Stack
+      screenOptions={{
+        headerShown: true,
+        // Android’s default is start-aligned; iOS is centered. Match iOS.
+        headerTitleAlign: "center",
+      }}
+    >
       <Stack.Screen name="login" options={{ title: "Log in" }} />
       <Stack.Screen name="signup" options={{ title: "Create account" }} />
     </Stack>

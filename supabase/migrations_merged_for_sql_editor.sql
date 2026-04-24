@@ -181,3 +181,8 @@ create or replace trigger on_auth_user_created
 -- Habit row no longer stores user difficulty; only ai_plan JSON carries plan difficulty.
 -- No-op on fresh DBs; removes column if an older migration created it.
 alter table public.habits drop column if exists difficulty;
+
+--== 20260501120000_habits_add_context.sql ==--
+
+-- Optional free-text context for AI generation (MVP create flow)
+alter table public.habits add column if not exists context text;

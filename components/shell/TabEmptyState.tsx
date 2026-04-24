@@ -1,23 +1,29 @@
 import { Text, View } from "@/components/Themed";
-import { type TabShellVariant, getTabAccent } from "@/constants/theme";
+import {
+  type TabShellVariant,
+  getTabAccent,
+  productThemeHeaderStrip,
+} from "@/constants/theme";
 import { type ReactNode } from "react";
 import { StyleSheet, View as RNView } from "react-native";
 
 export function ShellTopAccent({ variant }: { variant: TabShellVariant }) {
   const accent = getTabAccent(variant);
   if (!accent) return null;
+  const strip = productThemeHeaderStrip[variant as keyof typeof productThemeHeaderStrip];
   return (
     <RNView
       style={[
         styles.topAccent,
-        { backgroundColor: accent.soft, borderColor: accent.border },
+        { backgroundColor: strip.soft, borderColor: strip.border },
       ]}
     />
   );
 }
 
 type Props = {
-  title: string;
+  /** Short line under the tab header; not a repeat of the nav title. */
+  subtitle: string;
   children: ReactNode;
   variant?: TabShellVariant;
 };
@@ -25,7 +31,7 @@ type Props = {
 /**
  * Centered empty / placeholder with optional pastel top strip per tab.
  */
-export function TabEmptyState({ title, children, variant = "default" }: Props) {
+export function TabEmptyState({ subtitle, children, variant = "default" }: Props) {
   const accent = getTabAccent(variant);
 
   return (
@@ -33,11 +39,11 @@ export function TabEmptyState({ title, children, variant = "default" }: Props) {
       {accent && <ShellTopAccent variant={variant} />}
       <View style={styles.inner}>
         <Text
-          style={styles.title}
+          style={styles.subtitle}
           lightColor={accent?.primary}
           darkColor={accent?.primary}
         >
-          {title}
+          {subtitle}
         </Text>
         <Text
           style={styles.body}
@@ -67,10 +73,11 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: "100%",
   },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    marginBottom: 10,
+  subtitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    lineHeight: 20,
+    marginBottom: 8,
   },
   body: {
     fontSize: 16,

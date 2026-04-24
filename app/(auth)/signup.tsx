@@ -17,6 +17,7 @@ import {
 } from "react-native";
 
 import Colors from "@/constants/Colors";
+import { PasswordTextInput } from "@/components/PasswordTextInput";
 import { Text, View } from "@/components/Themed";
 import { useColorScheme } from "@/components/useColorScheme";
 
@@ -65,9 +66,6 @@ export default function SignupScreen() {
     >
       <View style={styles.container}>
         <Text style={styles.heading}>Create account</Text>
-        <Text style={styles.muted} lightColor="#666" darkColor="#aaa">
-          Use a strong password (at least 8 characters).
-        </Text>
 
         <Text style={styles.label}>Email</Text>
         <Controller
@@ -98,22 +96,27 @@ export default function SignupScreen() {
           control={control}
           name="password"
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
+            <PasswordTextInput
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
-              secureTextEntry
               textContentType="newPassword"
               autoComplete="password-new"
-              placeholder="At least 8 characters"
+              placeholder="********"
               placeholderTextColor={theme.tabIconDefault}
               style={[
                 styles.input,
+                styles.inputAfterPassword,
                 { color: theme.text, borderColor: theme.tabIconDefault },
               ]}
             />
           )}
         />
+        <Text style={styles.passwordHint} lightColor="#666" darkColor="#aaa">
+          {
+            "Password must be at least 8 characters and include uppercase, lowercase, a number, and a symbol."
+          }
+        </Text>
 
         <Pressable
           onPress={onSubmit}
@@ -148,8 +151,14 @@ export default function SignupScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { flex: 1, padding: 24, justifyContent: "center" },
-  heading: { fontSize: 24, fontWeight: "600", marginBottom: 8 },
-  muted: { marginBottom: 24 },
+  heading: {
+    fontSize: 24,
+    fontWeight: "600",
+    marginBottom: 24,
+    textAlign: "center",
+    alignSelf: "stretch",
+  },
+  passwordHint: { fontSize: 13, lineHeight: 19, marginTop: 6, marginBottom: 20 },
   label: { fontSize: 14, fontWeight: "500", marginBottom: 6 },
   input: {
     borderWidth: StyleSheet.hairlineWidth,
@@ -159,6 +168,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 16,
   },
+  inputAfterPassword: { marginBottom: 0 },
   button: {
     borderRadius: 8,
     paddingVertical: 14,

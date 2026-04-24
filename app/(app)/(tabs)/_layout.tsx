@@ -1,12 +1,13 @@
-import React from "react";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { Link, Tabs } from "expo-router";
-import { Pressable, View } from "react-native";
+import { Link, Tabs, useRouter } from "expo-router";
+import React from "react";
+import { Platform, Pressable } from "react-native";
 
+import { useClientOnlyValue } from "@/components/useClientOnlyValue";
+import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
 import { productTheme } from "@/constants/theme";
-import { useColorScheme } from "@/components/useColorScheme";
-import { useClientOnlyValue } from "@/components/useClientOnlyValue";
+import { hrefHabitNew } from "@/lib/href";
 
 const tabAccent = {
   today: productTheme.today.primary,
@@ -23,6 +24,20 @@ function TabBarIcon(props: {
   return <FontAwesome size={24} style={{ marginBottom: -2 }} {...props} />;
 }
 
+function AddHabitHeaderButton({ kind }: { kind: "build" | "break" }) {
+  const router = useRouter();
+  const color = kind === "build" ? tabAccent.build : tabAccent.break;
+  return (
+    <Pressable
+      onPress={() => router.push(hrefHabitNew(kind))}
+      accessibilityLabel={kind === "build" ? "Add build habit" : "Add break habit"}
+      style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, marginRight: 16 })}
+    >
+      <FontAwesome name="plus" size={22} color={color} />
+    </Pressable>
+  );
+}
+
 export default function TabLayout() {
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
@@ -33,12 +48,16 @@ export default function TabLayout() {
       screenOptions={{
         tabBarInactiveTintColor: inactive,
         headerShown: useClientOnlyValue(false, true),
+        // Native stack default on Android is start-aligned; center matches iOS and typical tab shells.
+        ...(Platform.OS === "android" && { headerTitleAlign: "center" as const }),
       }}
     >
       <Tabs.Screen
         name="today"
         options={{
           title: "Today",
+          headerTintColor: tabAccent.today,
+          headerTitleStyle: { color: tabAccent.today },
           tabBarActiveTintColor: tabAccent.today,
           tabBarIcon: ({ focused }) => (
             <TabBarIcon
@@ -66,7 +85,10 @@ export default function TabLayout() {
         name="build"
         options={{
           title: "Build",
+          headerTintColor: tabAccent.build,
+          headerTitleStyle: { color: tabAccent.build },
           tabBarActiveTintColor: tabAccent.build,
+          headerRight: () => <AddHabitHeaderButton kind="build" />,
           tabBarIcon: ({ focused }) => (
             <TabBarIcon
               name="plus-circle"
@@ -79,7 +101,10 @@ export default function TabLayout() {
         name="break"
         options={{
           title: "Break",
+          headerTintColor: tabAccent.break,
+          headerTitleStyle: { color: tabAccent.break },
           tabBarActiveTintColor: tabAccent.break,
+          headerRight: () => <AddHabitHeaderButton kind="break" />,
           tabBarIcon: ({ focused }) => (
             <TabBarIcon
               name="chain-broken"
@@ -92,6 +117,8 @@ export default function TabLayout() {
         name="track"
         options={{
           title: "Track",
+          headerTintColor: tabAccent.track,
+          headerTitleStyle: { color: tabAccent.track },
           tabBarActiveTintColor: tabAccent.track,
           tabBarIcon: ({ focused }) => (
             <TabBarIcon
@@ -105,6 +132,9 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "Profile",
+          // Match page titles: use theme text (white in dark mode), not the gray profile accent
+          headerTintColor: theme.text,
+          headerTitleStyle: { color: theme.text },
           tabBarActiveTintColor: tabAccent.profile,
           tabBarIcon: ({ focused }) => (
             <TabBarIcon

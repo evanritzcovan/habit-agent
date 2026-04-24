@@ -17,6 +17,7 @@ import {
 } from "react-native";
 
 import Colors from "@/constants/Colors";
+import { PasswordTextInput } from "@/components/PasswordTextInput";
 import { Text, View } from "@/components/Themed";
 import { useColorScheme } from "@/components/useColorScheme";
 
@@ -90,11 +91,10 @@ export default function LoginScreen() {
           control={control}
           name="password"
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
+            <PasswordTextInput
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
-              secureTextEntry
               textContentType="password"
               autoComplete="password"
               placeholder="••••••••"
@@ -140,8 +140,14 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { flex: 1, padding: 24, justifyContent: "center" },
-  heading: { fontSize: 24, fontWeight: "600", marginBottom: 8 },
-  muted: { marginBottom: 24 },
+  heading: {
+    fontSize: 24,
+    fontWeight: "600",
+    marginBottom: 8,
+    textAlign: "center",
+    alignSelf: "stretch",
+  },
+  muted: { marginBottom: 24, textAlign: "center", alignSelf: "stretch" },
   label: { fontSize: 14, fontWeight: "500", marginBottom: 6 },
   input: {
     borderWidth: StyleSheet.hairlineWidth,

@@ -35,6 +35,36 @@ export const productTheme = {
   },
 } as const;
 
+/**
+ * Header bar under the nav (ShellTopAccent) — a bit more vivid than `productTheme.*.soft/border`
+ * so the strip reads well in both light and dark mode.
+ */
+export const productThemeHeaderStrip: Record<
+  "today" | "build" | "break" | "track" | "profile",
+  { soft: string; border: string }
+> = {
+  today: {
+    soft: "rgba(100, 160, 235, 0.30)",
+    border: "rgba(130, 185, 255, 0.58)",
+  },
+  build: {
+    soft: "rgba(50, 210, 110, 0.28)",
+    border: "rgba(100, 230, 150, 0.55)",
+  },
+  break: {
+    soft: "rgba(240, 90, 160, 0.28)",
+    border: "rgba(255, 130, 195, 0.55)",
+  },
+  track: {
+    soft: "rgba(230, 190, 50, 0.30)",
+    border: "rgba(255, 220, 90, 0.55)",
+  },
+  profile: {
+    soft: "rgba(150, 160, 180, 0.30)",
+    border: "rgba(190, 200, 215, 0.55)",
+  },
+};
+
 export type TabShellVariant = "today" | "build" | "break" | "track" | "profile" | "default";
 
 export type ProductAccent = (typeof productTheme)[keyof typeof productTheme];

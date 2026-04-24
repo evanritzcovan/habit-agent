@@ -6,13 +6,25 @@ type AuthContextValue = {
   session: Session | null;
   isLoading: boolean;
   signOut: () => Promise<void>;
+  /** Re-fetches the user and session (e.g. after `updateUser` or returning to the app). */
+  revalidateSession: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+/**
+ * The object passed to `onAuthStateChange` can lag behind the client’s stored session after
+ * `updateUser` / `refreshSession`. `getUser` + `getSession` keep React state in sync.
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const revalidateSession = useCallback(async () => {
+    await supabase.auth.getUser();
+    const { data } = await supabase.auth.getSession();
+    setSession(data.session ?? null);
+  }, []);
 
   useEffect(() => {
     supabase.auth
@@ -24,8 +36,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
+    } = supabase.auth.onAuthStateChange(() => {
+      void (async () => {
+        const { data } = await supabase.auth.getSession();
+        setSession(data.session ?? null);
+      })();
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -35,8 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ session, isLoading, signOut }),
-    [session, isLoading, signOut]
+    () => ({ session, isLoading, signOut, revalidateSession }),
+    [session, isLoading, signOut, revalidateSession]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
