@@ -2,9 +2,11 @@ import { Text, View } from "@/components/Themed";
 import { useColorScheme } from "@/components/useColorScheme";
 import { productTheme } from "@/constants/theme";
 import { useAuth } from "@/contexts/AuthContext";
+import { getAiGenerationUiState, type AiGenerationUiState } from "@/lib/aiGeneration";
 import { toISODateString } from "@/lib/dates";
 import { createHabit } from "@/lib/habits";
 import { hrefHabitDetail } from "@/lib/href";
+import { generateAndAttachPlan } from "@/lib/planGeneration";
 import { createHabitSchema, type CreateHabitInput } from "@/lib/validation/habit";
 import type { HabitType } from "@/types/habit";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -40,6 +42,8 @@ export default function NewHabitScreen() {
   const router = useRouter();
   const scheme = useColorScheme() ?? "light";
   const [submitting, setSubmitting] = useState(false);
+  const [busyHint, setBusyHint] = useState<string | null>(null);
+  const [genUi, setGenUi] = useState<AiGenerationUiState | null>(null);
   const [startDate, setStartDate] = useState(() => new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const border = scheme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)";
@@ -58,6 +62,14 @@ export default function NewHabitScreen() {
     setValue("type", defaultType, { shouldValidate: true });
   }, [defaultType, setValue]);
 
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    void (async () => {
+      const { data } = await getAiGenerationUiState(session.user.id);
+      setGenUi(data);
+    })();
+  }, [session?.user?.id]);
+
   const syncDate = useCallback(
     (d: Date) => {
       setStartDate(d);
@@ -72,18 +84,57 @@ export default function NewHabitScreen() {
       return;
     }
     setSubmitting(true);
+    setBusyHint("Saving habit…");
     const parsed = createHabitSchema.safeParse(data);
     if (!parsed.success) {
       setSubmitting(false);
+      setBusyHint(null);
       Alert.alert("Check fields", parsed.error.issues[0]?.message ?? "Invalid data");
       return;
     }
     const { data: created, error } = await createHabit(session.user.id, parsed.data);
-    setSubmitting(false);
     if (error || !created) {
+      setSubmitting(false);
+      setBusyHint(null);
       Alert.alert("Could not save", error?.message ?? "Unknown error");
       return;
     }
+
+    const knownLimitReached = !genUi?.isPaid && genUi !== null && genUi.remaining === 0;
+    if (knownLimitReached) {
+      setSubmitting(false);
+      setBusyHint(null);
+      router.replace(hrefHabitDetail(created.id));
+      return;
+    }
+
+    setBusyHint("Generating plan…");
+    const ctx = parsed.data.context?.trim();
+    const planResult = await generateAndAttachPlan(session.user.id, created.id, {
+      user_input: ctx ? ctx : undefined,
+    });
+    setSubmitting(false);
+    setBusyHint(null);
+
+    if (planResult.error) {
+      if (planResult.limitInfo) {
+        Alert.alert(
+          "Generation limit",
+          `${planResult.error.message} You can open the habit and try again next month, or upgrade when available.`
+        );
+      } else {
+        Alert.alert(
+          "Plan not generated",
+          `${planResult.error.message} Your habit was saved — open it and tap Generate Plan to retry.`
+        );
+      }
+    }
+
+    if (session?.user?.id) {
+      const { data: ui } = await getAiGenerationUiState(session.user.id);
+      setGenUi(ui);
+    }
+
     router.replace(hrefHabitDetail(created.id));
   };
 
@@ -190,7 +241,7 @@ export default function NewHabitScreen() {
 
         <Text style={styles.label}>Context (optional)</Text>
         <Text style={styles.hint} lightColor="#666" darkColor="#999">
-          Notes for the AI when you generate a plan (Phase 6).
+          Sent to the model when your first plan is generated.
         </Text>
         <Controller
           control={control}
@@ -218,6 +269,17 @@ export default function NewHabitScreen() {
           )}
         />
 
+        {genUi && !genUi.isPaid && genUi.remaining === 0 ? (
+          <Text style={styles.usageWarn} lightColor="#b91c1c" darkColor="#f87171">
+            You have no AI generations left this month. You can still save the habit and generate a plan later if your limit resets or you upgrade.
+          </Text>
+        ) : null}
+        {genUi && !genUi.isPaid ? (
+          <Text style={styles.usageNote} lightColor="#52525b" darkColor="#a1a1aa">
+            AI generations left this month: {genUi.remaining ?? 0} of {genUi.cap}
+          </Text>
+        ) : null}
+
         <Pressable
           onPress={handleSubmit(onValid)}
           disabled={submitting}
@@ -233,10 +295,15 @@ export default function NewHabitScreen() {
             <ActivityIndicator color="#fff" />
           ) : (
             <Text lightColor="#fff" darkColor="#0f172a" style={styles.saveText}>
-              Save habit
+              {genUi && !genUi.isPaid && genUi.remaining === 0 ? "Save" : "Save & Generate Plan"}
             </Text>
           )}
         </Pressable>
+        {busyHint ? (
+          <Text style={styles.busyHint} lightColor="#52525b" darkColor="#a1a1aa">
+            {busyHint}
+          </Text>
+        ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -275,4 +342,7 @@ const styles = StyleSheet.create({
   },
   save: { marginTop: 24, borderRadius: 10, paddingVertical: 14, alignItems: "center" },
   saveText: { fontSize: 16, fontWeight: "600" },
+  usageWarn: { fontSize: 13, marginTop: 16, marginBottom: 8, lineHeight: 18 },
+  usageNote: { fontSize: 13, marginTop: 16, marginBottom: 4 },
+  busyHint: { fontSize: 13, marginTop: 10, textAlign: "center" },
 });

@@ -1,8 +1,8 @@
 /**
- * Shared contract for `habit_plans.ai_plan` JSON and AI Edge Function output.
- * Keep in sync with `supabase/functions/_shared/aiPlan.zod.ts` (Deno copy for deploy).
+ * Duplicate of /schemas/aiPlan.zod.ts for Deno (Edge). Keep in sync with the app + DB contract.
  */
-import { z } from "zod";
+// npm: resolves reliably on Supabase’s remote bundler; align with root `zod` in package.json.
+import { z } from "npm:zod@3.25.76";
 
 /** 0 = Sunday, 1 = Monday, …, 6 = Saturday (aligns with `Date.getDay()`) */
 export const weekdaySchema = z.number().int().min(0).max(6);

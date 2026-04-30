@@ -20,6 +20,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   TextInput,
   View as RNView,
 } from "react-native";
@@ -164,11 +165,25 @@ export default function ProfileScreen() {
   const [changePasswordLoading, setChangePasswordLoading] = useState(false);
   /** Remount password inputs on open (Android uncontrolled `PasswordTextInput`); clears native text. */
   const [changePasswordFieldMount, setChangePasswordFieldMount] = useState(0);
+  const [isPremiumTest, setIsPremiumTest] = useState(false);
+  const [premiumLoading, setPremiumLoading] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       void revalidateSession();
-    }, [revalidateSession])
+      const uid = session?.user?.id;
+      if (!uid) return;
+      void (async () => {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("is_paid_subscriber")
+          .eq("id", uid)
+          .maybeSingle();
+        if (!error) {
+          setIsPremiumTest(data?.is_paid_subscriber === true);
+        }
+      })();
+    }, [revalidateSession, session?.user?.id])
   );
 
   const openChangeEmail = useCallback(() => {
@@ -283,6 +298,26 @@ export default function ProfileScreen() {
       setChangePasswordLoading(false);
     }
   }, [confirmPassword, newPassword, revalidateSession]);
+
+  const togglePremiumForTesting = useCallback(
+    async (next: boolean) => {
+      const uid = session?.user?.id;
+      if (!uid || premiumLoading) return;
+      setPremiumLoading(true);
+      const prev = isPremiumTest;
+      setIsPremiumTest(next);
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_paid_subscriber: next })
+        .eq("id", uid);
+      setPremiumLoading(false);
+      if (error) {
+        setIsPremiumTest(prev);
+        Alert.alert("Could not update premium test flag", error.message);
+      }
+    },
+    [isPremiumTest, premiumLoading, session?.user?.id]
+  );
 
   return (
     <RNView style={styles.screenRoot}>
@@ -658,6 +693,26 @@ export default function ProfileScreen() {
           lightColor="#f4f4f5"
           darkColor="rgba(255,255,255,0.06)"
         >
+          <RNView style={styles.testPremiumRow}>
+            <RNView style={styles.testPremiumText}>
+              <Text style={styles.testPremiumTitle}>Premium (test)</Text>
+              <Text style={styles.testPremiumHint} lightColor="#52525b" darkColor="#a1a1aa">
+                Temporary local test switch. Toggles this account between free and premium.
+              </Text>
+            </RNView>
+            {premiumLoading ? (
+              <ActivityIndicator />
+            ) : (
+              <Switch
+                value={isPremiumTest}
+                onValueChange={(next) => {
+                  void togglePremiumForTesting(next);
+                }}
+                trackColor={{ false: "rgba(120,120,128,0.4)", true: p.primary }}
+                thumbColor="#ffffff"
+              />
+            )}
+          </RNView>
           <Text
             style={styles.cardBody}
             lightColor="#52525b"
@@ -839,6 +894,16 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   cardBody: { fontSize: 15, lineHeight: 22, marginBottom: 14 },
+  testPremiumRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    marginBottom: 14,
+  },
+  testPremiumText: { flex: 1, minWidth: 0 },
+  testPremiumTitle: { fontSize: 15, fontWeight: "600", marginBottom: 2 },
+  testPremiumHint: { fontSize: 12, lineHeight: 17 },
   cta: {
     borderRadius: 8,
     paddingVertical: 12,

@@ -2,6 +2,7 @@ import { Text, View } from "@/components/Themed";
 import { useColorScheme } from "@/components/useColorScheme";
 import { productTheme } from "@/constants/theme";
 import { toISODateString } from "@/lib/dates";
+import { invalidateHabitDetailCache } from "@/lib/habitDetailCache";
 import { getHabitById, updateHabit } from "@/lib/habits";
 import { hrefHabitDetail } from "@/lib/href";
 import { updateHabitSchema, type UpdateHabitInput } from "@/lib/validation/habit";
@@ -136,6 +137,7 @@ export default function EditHabitScreen() {
       Alert.alert("Could not save", error?.message ?? "Unknown error");
       return;
     }
+    invalidateHabitDetailCache(session.user.id, id);
     // Pop edit so the existing Details screen (below) is shown; `replace` can duplicate the route.
     if (router.canGoBack()) {
       router.back();
